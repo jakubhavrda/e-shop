@@ -124,10 +124,43 @@ app.get("/discover/:category/:id", async(req, res) => {
 app.post("/searchbar", async(req, res) => {
     try {
        const {name} = req.body;
-       const result = await db.query("SELECT * FROM products WHERE name LIKE ($1)", [name]) 
+       const result = await db.query("SELECT * FROM products WHERE name LIKE ($1) ", [name]) 
        res.json(result.rows);
     } catch (err) {
         console.error(err)
+    }
+});
+
+app.get("/searchbar/:category", async(req, res) => {
+    try{
+        const {category} = req.params;
+        const result = await db.query("SELECT * FROM products WHERE category = ($1)", [category]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+// ORDERS
+ 
+app.get("/order/:order_id", async(req, res) => {
+    try {
+        const { order_id } = req.params;
+        const result = await db.query("SELECT * FROM orders WHERE order_id = ($1)", [order_id]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+app.post("/usersOrders", async(req,res) => {
+    try {
+        const { user_id } = req.body;
+        console.log(user_id);
+        const result = await db.query("SELECT * FROM orders WHERE user_id = ($1)", [user_id]);
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err.message);
     }
 });
 
