@@ -52,12 +52,17 @@ SELECT * FROM products WHERE name LIKE '%Nike%'
 CREATE TABLE orders (
     order_id SERIAL PRIMARY KEY UNIQUE,
     user_id UUID REFERENCES users(user_id),
+    date_of_creation timestamp,
     paid BOOLEAN DEFAULT false,
     complete BOOLEAN DEFAULT false,
-    list_of_items  JSONB
+    list_of_items  JSONB DEFAULT [],
+    total_price integer NOT NULL
 );
 
+ALTER TABLE orders 
+ALTER COLUMN date_of_creation TYPE VARCHAR(100)
 
 INSERT INTO orders (user_id, list_of_items, paid, complete)
-VALUES ('9849cee5-ee3e-43b9-a8c2-2df764a3d2e6', '[{"id": 40, "name": "Nike Shirt", "in_stock": 50, "category": "X", "color": "Blue"}, {"id": 40, "name": "Nike Shirt", "in_stock": 50, "category": "X", "color": "Blue"}]', true, true);
+VALUES ('9849cee5-ee3e-43b9-a8c2-2df764a3d2e6', '[{"id": 40, "name": "Nike Shirt", "in_stock": 50, "category": "X", "color": "Blue", "price": 499}, {"id": 40, "name": "Nike Shirt", "in_stock": 50, "category": "X", "color": "Blue", "price": 499}]', true, true);
+
 

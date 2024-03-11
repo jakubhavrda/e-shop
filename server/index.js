@@ -142,6 +142,22 @@ app.get("/searchbar/:category", async(req, res) => {
 });
 
 // ORDERS
+
+// current_order
+
+app.post("/orderByUser", async(req,res) => {
+    try {
+        const user_id = req.body;
+        console.log(user_id);
+        const findOrder = await db.query("SELECT * FROM orders WHERE user_id = ($1) AND paid = ($2)", [user_id.user_id, false]);
+        res.json(findOrder.rows);
+        console.log(findOrder.rows);
+    } catch (err) {
+        console.error(err);
+    }
+})
+
+//order by id
  
 app.get("/order/:order_id", async(req, res) => {
     try {
@@ -153,10 +169,11 @@ app.get("/order/:order_id", async(req, res) => {
     }
 });
 
+//order by user
+
 app.post("/usersOrders", async(req,res) => {
     try {
         const { user_id } = req.body;
-        console.log(user_id);
         const result = await db.query("SELECT * FROM orders WHERE user_id = ($1)", [user_id]);
         res.json(result.rows);
     } catch (err) {
@@ -164,7 +181,51 @@ app.post("/usersOrders", async(req,res) => {
     }
 });
 
+//create order
 
+app.post("/createOrder", async(req, res) => {
+    try {
+        const user_id = req.body.user_id;   
+        const list_of_items = req.body.list_of_items;
+        const date_of_creation = new Date().toLocaleString();         
+        let total_price = 0;
+        list_of_items.forEach(item => {
+            total_price += item.price
+        });
+        const findOrder = await db.query("SELECT * FROM orders WHERE user_id = ($1) AND paid = ($2)", [user_id, false]);
+        res.json(findOrder.rows)
+        if(findOrder.rowCount > 0) {
+            console.log("item will be added to cart");
+        } else {
+            //Order was created!
+            const newOrder = await db.query("INSERT INTO orders (user_id, list_of_items, date_of_creation, total_price) VALUES ($1, $2, $3, $4)",
+                [user_id, JSON.stringify(list_of_items), date_of_creation, total_price]);
+            res.json(newOrder.rows[0]);
+        }
+    } catch (err) {
+        console.error(err.message);
+    }
+});
+
+//delete order
+
+app.delete("/order/:order_id", async(req, res) => {
+    try {
+        
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+//edit order
+
+app.put("/order/:order_id", async(req,res) => {
+    try {
+        
+    } catch (err) {
+        console.error(err);
+    }
+});
 
 // LISTEN
 

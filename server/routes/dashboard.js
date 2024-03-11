@@ -8,9 +8,8 @@ router.get("/", authorization, async(req,res) => {
         res.json(user.rows[0])
     } catch (err) {
         console.error(err.message);
-        res.status(500).json("Server error");
+        res.status(500).json("Server Error!");
     }
 });
-
 
 module.exports = router;
