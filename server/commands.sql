@@ -24,7 +24,8 @@ ADD description VARCHAR(300)
 ALTER TABLE products 
 ALTER COLUMN description TYPE VARCHAR(700) 
 
-
+ALTER TABLE products
+ADD amount integer DEFAULT 1
 
 
 CREATE TABLE users(

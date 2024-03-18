@@ -190,7 +190,7 @@ app.post("/createOrder", async(req, res) => {
         const date_of_creation = new Date().toLocaleString();         
         let total_price = 0;
         list_of_items.forEach(item => {
-            total_price += item.price
+            total_price += (item.price*item.amount)
         });
         const findOrder = await db.query("SELECT * FROM orders WHERE user_id = ($1) AND paid = ($2)", [user_id, false]);
         res.json(findOrder.rows)
@@ -207,6 +207,7 @@ app.post("/createOrder", async(req, res) => {
     }
 });
 
+
 //delete order
 
 app.delete("/order/:order_id", async(req, res) => {
@@ -219,8 +220,20 @@ app.delete("/order/:order_id", async(req, res) => {
 
 //edit order
 
-app.put("/order/:order_id", async(req,res) => {
+app.post("/order/edit", async(req,res) => {
     try {
+        const { number, order_id } = req.body;
+        console.log({number, order_id});
+        if(number === 0){
+            // delete order, save database space!
+            console.log("you are here!");
+            const deleteOrder = await db.query("DELETE FROM orders WHERE order_id = ($1)", [order_id]);
+            res.json(deleteOrder.rows[0])
+        } else {
+            // proceed to edit the order!
+            //const editAmount = await db.query("UPDATE orders SET list_of_items = ($1) WHERE order_id = ($2)", [body]); // <- not tested
+            //res.json(editAmount.rows[0])
+        }
         
     } catch (err) {
         console.error(err);
