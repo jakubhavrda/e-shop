@@ -18,7 +18,7 @@ app.use("/auth", require("./routes/jwtAuth"));
 
 app.use("/dashboard", require("./routes/dashboard"));
 
-//OTHER
+///// LATEST OFFER ///////
 
 app.get("/", async(req,res) =>{
     try {
@@ -28,6 +28,8 @@ app.get("/", async(req,res) =>{
         console.error(err);
     };
 });
+
+/////////// ADMIN //////////////////
 
 app.get("/allProducts", async(req, res) => {
     try {
@@ -76,7 +78,7 @@ app.put("/admin/put/:id", async(req,res) => {
     }
 });
 
-// Categories
+//////////////// Categories /////////////////////
 
 app.get("/categories/get", async(req, res) => {
     try {
@@ -119,7 +121,7 @@ app.get("/discover/:category/:id", async(req, res) => {
     }
 });
 
-// SEARCHBAR
+//////////// SEARCHBAR /////////////
 
 app.post("/searchbar", async(req, res) => {
     try {
@@ -141,29 +143,28 @@ app.get("/searchbar/:category", async(req, res) => {
     }
 });
 
-// ORDERS
+/////////// ORDERS ////////////
 
 // current_order
 
 app.post("/orderByUser", async(req,res) => {
     try {
         const user_id = req.body;
-        console.log(user_id);
         const findOrder = await db.query("SELECT * FROM orders WHERE user_id = ($1) AND paid = ($2)", [user_id.user_id, false]);
         res.json(findOrder.rows);
-        console.log(findOrder.rows);
     } catch (err) {
         console.error(err);
     }
-})
+});
 
-//order by id
+//order by id 
  
-app.get("/order/:order_id", async(req, res) => {
+app.get("/order/:user_id/:order_id", async(req, res) => {
     try {
-        const { order_id } = req.params;
-        const result = await db.query("SELECT * FROM orders WHERE order_id = ($1)", [order_id]);
+        const { user_id , order_id } = req.params;
+        const result = await db.query("SELECT * FROM orders WHERE order_id = ($1) AND user_id = ($2)", [order_id, user_id]);
         res.json(result.rows);
+        console.log(result.rows);
     } catch (err) {
         console.error(err);
     }
@@ -181,66 +182,91 @@ app.post("/usersOrders", async(req,res) => {
     }
 });
 
-//create order
+//create order & add to order
 
 app.post("/createOrder", async(req, res) => {
     try {
-        const user_id = req.body.user_id;   
-        const list_of_items = req.body.list_of_items;
+        const {list_of_items, user_id} = req.body;
         const date_of_creation = new Date().toLocaleString();         
         let total_price = 0;
         list_of_items.forEach(item => {
             total_price += (item.price*item.amount)
         });
         const findOrder = await db.query("SELECT * FROM orders WHERE user_id = ($1) AND paid = ($2)", [user_id, false]);
-        res.json(findOrder.rows)
+       
         if(findOrder.rowCount > 0) {
-            console.log("item will be added to cart");
+            const addToOrder = await db.query("UPDATE orders SET list_of_items = ($1), total_price = ($2), date_of_creation = ($4) WHERE order_id = ($3)", [JSON.stringify(list_of_items), total_price, findOrder.rows[0].order_id, date_of_creation])
+            const getOrder = await db.query("SELECT * FROM orders WHERE order_id = ($1)", [findOrder.rows[0].order_id]);
+            res.json(getOrder.rows[0]);
         } else {
             //Order was created!
             const newOrder = await db.query("INSERT INTO orders (user_id, list_of_items, date_of_creation, total_price) VALUES ($1, $2, $3, $4)",
                 [user_id, JSON.stringify(list_of_items), date_of_creation, total_price]);
             res.json(newOrder.rows[0]);
         }
+       
     } catch (err) {
         console.error(err.message);
     }
 });
 
 
-//delete order
-
-app.delete("/order/:order_id", async(req, res) => {
-    try {
-        
-    } catch (err) {
-        console.error(err);
-    }
-});
 
 //edit order
 
 app.post("/order/edit", async(req,res) => {
     try {
-        const { number, order_id } = req.body;
-        console.log({number, order_id});
+        const { number, order_id, list_of_items } = req.body;
+        let total_price = 0;
         if(number === 0){
-            // delete order, save database space!
-            console.log("you are here!");
+            // { number: undefined, order_id: undefined, list_of_items: undefined } <<-- problem here!
             const deleteOrder = await db.query("DELETE FROM orders WHERE order_id = ($1)", [order_id]);
-            res.json(deleteOrder.rows[0])
         } else {
-            // proceed to edit the order!
-            //const editAmount = await db.query("UPDATE orders SET list_of_items = ($1) WHERE order_id = ($2)", [body]); // <- not tested
-            //res.json(editAmount.rows[0])
-        }
-        
+            // proceed to edit list_of_items variable!
+            list_of_items.forEach(item => {
+                total_price += (item.price*item.amount)
+            });
+            const editOrder = await db.query("UPDATE orders SET list_of_items = ($1), total_price = ($3) WHERE order_id = ($2)", [JSON.stringify(list_of_items), order_id, total_price]);
+        };
+        const result = await db.query("SELECT * FROM orders WHERE order_id = ($1)", [order_id]);
+        res.json(result.rows);
     } catch (err) {
         console.error(err);
     }
 });
 
-// LISTEN
+// payment complete
+
+app.post("/order/paymentDone", async(req, res) => {
+    try {
+        const {order_id} = req.body;
+        await db.query("UPDATE orders SET paid = ($1) WHERE order_id = ($2)", [true, order_id]);
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+// complete order
+
+app.post("/order/complete", async(req, res) => {
+    try {
+        const {order_id} = req.body;
+        await db.query("UPDATE orders SET complete = ($1) WHERE order_id = ($2)", [true, order_id]);
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+app.get("/admin/orders", async(req, res) => {
+    try {
+        const result = await db.query("SELECT * FROM orders ORDER BY order_id DESC");
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+    }
+});
+
+////////////////// LISTEN /////////////////
 
 app.listen(PORT, function(){
     console.log(`Server runs on port ${PORT}`);
