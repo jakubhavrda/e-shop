@@ -239,8 +239,9 @@ app.post("/order/edit", async(req,res) => {
 
 app.post("/order/paymentDone", async(req, res) => {
     try {
-        const {order_id} = req.body;
-        await db.query("UPDATE orders SET paid = ($1) WHERE order_id = ($2)", [true, order_id]);
+        const { order_id } = req.body;
+        const result = await db.query("UPDATE orders SET paid = ($1) WHERE order_id = ($2)", [true, order_id]);
+        res.json(result.rows)
     } catch (err) {
         console.error(err);
     }
@@ -251,7 +252,9 @@ app.post("/order/paymentDone", async(req, res) => {
 app.post("/order/complete", async(req, res) => {
     try {
         const {order_id} = req.body;
-        await db.query("UPDATE orders SET complete = ($1) WHERE order_id = ($2)", [true, order_id]);
+        console.log(order_id);
+        const result = await db.query("UPDATE orders SET complete = ($1) WHERE order_id = ($2)", [true, order_id]);
+        res.json(result.rows)
     } catch (err) {
         console.error(err);
     }
