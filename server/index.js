@@ -12,6 +12,7 @@ const PORT = 4000;
 db.connect();
 
 
+
 //AUTH
 
 app.use("/auth", require("./routes/jwtAuth"));
@@ -43,8 +44,11 @@ app.get("/allProducts", async(req, res) => {
 app.post("/admin/create", async(req,res) => {
     try {
         const item = req.body;
+        console.log(item);
+
         const response = await db.query("INSERT INTO products (name, price, category, in_stock, color, description) VALUES ($1, $2, $3, $4, $5, $6)", 
         item);
+
         res.json(response.rows[0]);
     } catch (err) {
         console.error(err);
