@@ -1,0 +1,26 @@
+{
+  "development": {
+    "username": "postgres",
+    "password": "Kamen5000",
+    "database": "e-shop",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "test": {
+    "username": "postgres",
+    "password": "Kamen5000",
+    "database": "e-shop",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  },
+  "production": {
+    "username": "postgres",
+    "password": "Kamen5000",
+    "database": "e-shop",
+    "host": "localhost",
+    "port": 5432,
+    "dialect": "postgres"
+  }
+}

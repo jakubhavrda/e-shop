@@ -1,17 +1,28 @@
 //jshint esversion:7
 
 const express = require("express");
-const app = express();
 const cors = require("cors");
 const db = require("./db");
+const multer = require("multer");
+const { Image } = require("./models"); // Sequelize model
 
+const app = express();
 app.use(cors());
 app.use(express.json());
 const PORT = 4000;
 
 db.connect();
 
-
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, 'uploads/');
+    },
+    filename: (req, file, cb) => {
+      cb(null, Date.now() + '-' + file.originalname);
+    }
+  });
+  
+  const upload = multer({ storage });
 
 //AUTH
 
@@ -41,10 +52,25 @@ app.get("/allProducts", async(req, res) => {
     };
 })
 
+app.post("/admin/upload", upload.single('image'), async(req, res) => {
+    // new code here!
+    
+    const { file } = req;
+    try {
+      const image = await Image.create({
+        name: file.originalname,
+        path: file.path,
+      });
+      console.log(image);
+      res.status(201).json(image);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to upload image' });
+    }
+});
+
 app.post("/admin/create", async(req,res) => {
     try {
         const item = req.body;
-        console.log(item);
 
         const response = await db.query("INSERT INTO products (name, price, category, in_stock, color, description) VALUES ($1, $2, $3, $4, $5, $6)", 
         item);
