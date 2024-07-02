@@ -5,6 +5,7 @@ const cors = require("cors");
 const db = require("./db");
 const multer = require("multer");
 const { Image } = require("./models"); // Sequelize model
+const { image } = require("qr-image");
 
 const app = express();
 app.use(cors());
@@ -18,7 +19,7 @@ const storage = multer.diskStorage({
       cb(null, 'uploads/');
     },
     filename: (req, file, cb) => {
-      cb(null, Date.now() + '-' + file.originalname);
+      cb(null, file.originalname);
     }
   });
   
@@ -35,7 +36,8 @@ app.use("/dashboard", require("./routes/dashboard"));
 app.get("/", async(req,res) =>{
     try {
         const response = await db.query("SELECT * FROM products ORDER BY id DESC LIMIT 3")
-        res.json(response.rows)
+        res.json(response.rows);
+
     } catch (err) {
         console.error(err);
     };
@@ -52,17 +54,28 @@ app.get("/allProducts", async(req, res) => {
     };
 })
 
-app.post("/admin/upload", upload.single('image'), async(req, res) => {
+app.post("/admin/upload/:productId", upload.array("images", 4), async(req, res) => {
     // new code here!
-    
-    const { file } = req;
+    const productId = req.params;
+    const files = req.files;
+    let images = [];
     try {
-      const image = await Image.create({
-        name: file.originalname,
-        path: file.path,
-      });
-      console.log(image);
-      res.status(201).json(image);
+        const imageRecords = await Promise.all(files.map(file => {
+            const image = {
+                name: file.originalname,
+                path: file.path,
+            }
+            images.push(image);
+        }     
+        ));
+        res.status(201).json(imageRecords);
+
+        await db.query("INSERT INTO images (name, path, productId) VALUES ($1,$2,$9), ($3,$4,$9), ($5,$6,$9), ($7,$8,$9)", 
+            [images[0].name, images[0].path, images[1].name, images[1].path, images[2].name, images[2].path, images[3].name, images[3].path, productId.productId]);
+
+        
+
+
     } catch (error) {
       res.status(500).json({ error: 'Failed to upload image' });
     }
@@ -72,7 +85,7 @@ app.post("/admin/create", async(req,res) => {
     try {
         const item = req.body;
 
-        const response = await db.query("INSERT INTO products (name, price, category, in_stock, color, description) VALUES ($1, $2, $3, $4, $5, $6)", 
+        const response = await db.query("INSERT INTO products (name, price, category, in_stock, color, description) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *", 
         item);
 
         res.json(response.rows[0]);

@@ -5,7 +5,8 @@
     "database": "e-shop",
     "host": "localhost",
     "port": 5432,
-    "dialect": "postgres"
+    "dialect": "postgres",
+    "logging": false
   },
   "test": {
     "username": "postgres",
