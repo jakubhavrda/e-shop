@@ -72,3 +72,12 @@ CREATE TABLE images (
     image VARCHAR(200),
     collection INT REFERENCES products(id)
 )
+
+SELECT *  FROM products
+INNER JOIN images
+ON products.id = images.productId
+
+SELECT *  FROM images
+INNER JOIN products
+ON images.productId = products.id
+WHERE products.id = 218 OR products.id = 219

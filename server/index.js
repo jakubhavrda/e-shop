@@ -5,7 +5,6 @@ const cors = require("cors");
 const db = require("./db");
 const multer = require("multer");
 const { Image } = require("./models"); // Sequelize model
-const { image } = require("qr-image");
 
 const app = express();
 app.use(cors());
@@ -35,9 +34,18 @@ app.use("/dashboard", require("./routes/dashboard"));
 
 app.get("/", async(req,res) =>{
     try {
-        const response = await db.query("SELECT * FROM products ORDER BY id DESC LIMIT 3")
-        res.json(response.rows);
+        const response = await db.query("SELECT * FROM products ORDER BY id DESC LIMIT 3");
+        const products = response.rows;
+        
+        let productIDs = [];
+        products.forEach((product) => {
+            productIDs.push(product.id);
+        });
+        const response2 = await db.query("SELECT path, name, productId FROM images WHERE productId = ($1) OR productId = ($2) OR productId = ($3)", productIDs); // not automatic ! maybe not neccessary
+        const images = response2.rows;
+        
 
+        res.json({products, images});
     } catch (err) {
         console.error(err);
     };
@@ -49,6 +57,9 @@ app.get("/allProducts", async(req, res) => {
     try {
         const response = await db.query("SELECT * FROM products ORDER BY id DESC");
         res.json(response.rows)
+
+        // pick up that id a select images .. . .
+
     } catch (err) {
         console.error(err);
     };
@@ -158,7 +169,11 @@ app.get("/discover/:category/:id", async(req, res) => {
     try {
         const params = req.params;
         const result = await db.query("SELECT * FROM products WHERE id = ($1)", [params.id])
-        res.json(result.rows)
+        res.json(result.rows);
+
+        // pick up that id a select images .. . .
+
+
     } catch (err) {
         console.error(err);
     }
@@ -171,6 +186,10 @@ app.post("/searchbar", async(req, res) => {
        const {name} = req.body;
        const result = await db.query("SELECT * FROM products WHERE name LIKE ($1) ", [name]) 
        res.json(result.rows);
+
+        // pick up that id a select images .. . .
+
+
     } catch (err) {
         console.error(err)
     }
@@ -181,6 +200,10 @@ app.get("/searchbar/:category", async(req, res) => {
         const {category} = req.params;
         const result = await db.query("SELECT * FROM products WHERE category = ($1)", [category]);
         res.json(result.rows);
+
+
+        // pick up that id a select images .. . .
+
     } catch (err) {
         console.error(err);
     }
