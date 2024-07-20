@@ -15,7 +15,7 @@ db.connect();
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-      cb(null, 'uploads/');
+      cb(null, '../client/src/images/products');
     },
     filename: (req, file, cb) => {
       cb(null, file.originalname);
@@ -74,7 +74,7 @@ app.post("/admin/upload/:productId", upload.array("images", 4), async(req, res) 
         const imageRecords = await Promise.all(files.map(file => {
             const image = {
                 name: file.originalname,
-                path: file.path,
+                path: "images/products/" + file.originalname,
             }
             images.push(image);
         }     
