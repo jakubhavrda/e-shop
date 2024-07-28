@@ -41,7 +41,7 @@ app.get("/", async(req,res) =>{
         products.forEach((product) => {
             productIDs.push(product.id);
         });
-        const response2 = await db.query("SELECT path, name, productId FROM images WHERE productId = ($1) OR productId = ($2) OR productId = ($3)", productIDs); // not automatic ! maybe not neccessary
+        const response2 = await db.query("SELECT path, name, productId FROM images WHERE productId = ($1) OR productId = ($2) OR productId = ($3)", productIDs);
         const images = response2.rows;
         
 
@@ -56,17 +56,29 @@ app.get("/", async(req,res) =>{
 app.get("/allProducts", async(req, res) => {
     try {
         const response = await db.query("SELECT * FROM products ORDER BY id DESC");
-        res.json(response.rows)
+        const products = response.rows;
 
-        // pick up that id a select images .. . .
+        let productIDs = [];
+        let index = 1;
+        let query = "SELECT path, name, productId FROM images WHERE ";      
+        products.forEach((product) => {
+            productIDs.push(product.id);
+            query = query.concat("productId = ($" + index + ") OR ");
+            index++
+        });
+        query = query.substring(0, query.length -3);
+        
 
+        const response2 = await db.query(query, productIDs);
+        const images = response2.rows;
+        
+        res.json({products, images})
     } catch (err) {
         console.error(err);
     };
 })
 
 app.post("/admin/upload/:productId", upload.array("images", 4), async(req, res) => {
-    // new code here!
     const productId = req.params;
     const files = req.files;
     let images = [];
@@ -168,12 +180,14 @@ app.delete("/categories/delete/:id", async(req, res) => {
 app.get("/discover/:category/:id", async(req, res) => {
     try {
         const params = req.params;
+
         const result = await db.query("SELECT * FROM products WHERE id = ($1)", [params.id])
-        res.json(result.rows);
+        const product = result.rows;
 
-        // pick up that id a select images .. . .
+        const result2 = await db.query("SELECT path, name, productId FROM images WHERE productId = ($1)", [product[0].id]);
+        const images = result2.rows;
 
-
+        res.json({product, images});
     } catch (err) {
         console.error(err);
     }
@@ -185,11 +199,23 @@ app.post("/searchbar", async(req, res) => {
     try {
        const {name} = req.body;
        const result = await db.query("SELECT * FROM products WHERE name LIKE ($1) ", [name]) 
-       res.json(result.rows);
+       const products = result.rows;
 
-        // pick up that id a select images .. . .
+       let productIDs = [];
+       let index = 1;
+       let query = "SELECT path, name, productId FROM images WHERE ";      
+       products.forEach((product) => {
+           productIDs.push(product.id);
+           query = query.concat("productId = ($" + index + ") OR ");
+           index++
+       });
+       query = query.substring(0, query.length -3);
+       
+       console.log(query);
+       const response2 = await db.query(query, productIDs);
+       const images = response2.rows;
 
-
+       res.json({products, images});
     } catch (err) {
         console.error(err)
     }
@@ -199,11 +225,22 @@ app.get("/searchbar/:category", async(req, res) => {
     try{
         const {category} = req.params;
         const result = await db.query("SELECT * FROM products WHERE category = ($1)", [category]);
-        res.json(result.rows);
+        const products = result.rows;
 
+        let productIDs = [];
+        let index = 1;
+        let query = "SELECT path, name, productId FROM images WHERE ";      
+        products.forEach((product) => {
+            productIDs.push(product.id);
+            query = query.concat("productId = ($" + index + ") OR ");
+            index++
+        });
+        query = query.substring(0, query.length -3);
+    
+        const response2 = await db.query(query, productIDs);
+        const images = response2.rows;
 
-        // pick up that id a select images .. . .
-
+        res.json({products, images});
     } catch (err) {
         console.error(err);
     }
@@ -250,7 +287,7 @@ app.post("/usersOrders", async(req,res) => {
 
 //create order & add to order
 
-app.post("/createOrder", async(req, res) => {
+app.post("/createOrEditOrder", async(req, res) => {
     try {
         const {list_of_items, user_id} = req.body;
         const date_of_creation = new Date().toLocaleString();         
