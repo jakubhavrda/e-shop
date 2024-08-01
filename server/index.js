@@ -5,6 +5,7 @@ const cors = require("cors");
 const db = require("./db");
 const multer = require("multer");
 const { Image } = require("./models"); // Sequelize model
+const { or } = require("sequelize");
 
 const app = express();
 app.use(cors());
@@ -211,7 +212,6 @@ app.post("/searchbar", async(req, res) => {
        });
        query = query.substring(0, query.length -3);
        
-       console.log(query);
        const response2 = await db.query(query, productIDs);
        const images = response2.rows;
 
@@ -250,11 +250,38 @@ app.get("/searchbar/:category", async(req, res) => {
 
 // current_order
 
-app.post("/orderByUser", async(req,res) => {
+app.get("/orderByUser/:user_id", async(req,res) => {
     try {
-        const user_id = req.body;
+        const user_id = req.params;
         const findOrder = await db.query("SELECT * FROM orders WHERE user_id = ($1) AND paid = ($2)", [user_id.user_id, false]);
-        res.json(findOrder.rows);
+        const order = findOrder.rows;
+
+        const products = order[0].list_of_items;
+        let productIDs = [];
+        let index = 1;
+        let query = "SELECT path, name, productId FROM images WHERE ";      
+        products.forEach((product) => {
+            productIDs.push(product.id);
+            query = query.concat("productId = ($" + index + ") OR ");
+            index++
+        });
+        query = query.substring(0, query.length -3);
+        const result2 = await db.query(query, productIDs);
+        const images = result2.rows;
+        /// select out mainImgs
+        let mainImgs = [];
+        images.forEach((image, index) => {
+            if(index % 4 === 0){
+                mainImgs.push(image)
+            } else if (index = 0) {
+                mainImgs.push(image)
+            };
+            index++; 
+        });
+        console.log(mainImgs);
+        
+
+        res.json({order, mainImgs});
     } catch (err) {
         console.error(err);
     }
@@ -266,8 +293,22 @@ app.get("/order/:user_id/:order_id", async(req, res) => {
     try {
         const { user_id , order_id } = req.params;
         const result = await db.query("SELECT * FROM orders WHERE order_id = ($1) AND user_id = ($2)", [order_id, user_id]);
-        res.json(result.rows);
-        console.log(result.rows);
+        const order = result.rows;
+
+        const products = order[0].list_of_items;
+        let productIDs = [];
+        let index = 1;
+        let query = "SELECT path, name, productId FROM images WHERE ";      
+        products.forEach((product) => {
+            productIDs.push(product.id);
+            query = query.concat("productId = ($" + index + ") OR ");
+            index++
+        });
+        query = query.substring(0, query.length -3);
+        const result2 = await db.query(query, productIDs);
+        const images = result2.rows;
+
+        res.json({order, images});
     } catch (err) {
         console.error(err);
     }
@@ -290,6 +331,7 @@ app.post("/usersOrders", async(req,res) => {
 app.post("/createOrEditOrder", async(req, res) => {
     try {
         const {list_of_items, user_id} = req.body;
+        console.log(list_of_items);
         const date_of_creation = new Date().toLocaleString();         
         let total_price = 0;
         list_of_items.forEach(item => {
