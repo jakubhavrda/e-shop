@@ -121,7 +121,6 @@ app.post("/admin/create", async(req,res) => {
 app.delete("/admin/delete/:id", async(req,res) => {
     try {
         const { id } = req.params;
-        console.log(id);
         const result = await db.query("DELETE FROM products WHERE id = ($1)", [id]);
         res.json(result);
     } catch (err) {
@@ -133,7 +132,6 @@ app.put("/admin/put/:id", async(req,res) => {
     try {
         const { id } = req.params;
         const editData = req.body;
-        console.log(editData);
 
         const result = await db.query(`UPDATE products SET name = ($1), price = ($2), category = ($3), in_stock = ($4), 
         color = ($5), description = ($6)  WHERE id = ${id}`,
@@ -170,7 +168,6 @@ app.post("/categories/create", async(req, res) => {
 app.delete("/categories/delete/:id", async(req, res) => {
     try {
         const { id } = req.params;
-        console.log(id);
         const result = await db.query("DELETE FROM categories WHERE ctgr_id = ($1)", [id]);
         res.json(result);
     } catch (err) {
@@ -278,7 +275,6 @@ app.get("/orderByUser/:user_id", async(req,res) => {
             };
             index++; 
         });
-        console.log(mainImgs);
         
 
         res.json({order, mainImgs});
@@ -331,7 +327,7 @@ app.post("/usersOrders", async(req,res) => {
 app.post("/createOrEditOrder", async(req, res) => {
     try {
         const {list_of_items, user_id} = req.body;
-        console.log(list_of_items);
+
         const date_of_creation = new Date().toLocaleString();         
         let total_price = 0;
         list_of_items.forEach(item => {
@@ -341,7 +337,9 @@ app.post("/createOrEditOrder", async(req, res) => {
        
         if(findOrder.rowCount > 0) {
             const addToOrder = await db.query("UPDATE orders SET list_of_items = ($1), total_price = ($2), date_of_creation = ($4) WHERE order_id = ($3)", [JSON.stringify(list_of_items), total_price, findOrder.rows[0].order_id, date_of_creation])
+            
             const getOrder = await db.query("SELECT * FROM orders WHERE order_id = ($1)", [findOrder.rows[0].order_id]);
+            
             res.json(getOrder.rows[0]);
         } else {
             //Order was created!
@@ -397,7 +395,6 @@ app.post("/order/paymentDone", async(req, res) => {
 app.post("/order/complete", async(req, res) => {
     try {
         const {order_id} = req.body;
-        console.log(order_id);
         const result = await db.query("UPDATE orders SET complete = ($1) WHERE order_id = ($2)", [true, order_id]);
         res.json(result.rows)
     } catch (err) {
