@@ -193,10 +193,14 @@ app.get("/discover/:category/:id", async(req, res) => {
 
 //////////// SEARCHBAR /////////////
 
-app.post("/searchbar", async(req, res) => {
+app.get("/searchbar/:query", async(req, res) => {
     try {
-       const {name} = req.body;
-       const result = await db.query("SELECT * FROM products WHERE name LIKE ($1) ", [name]) 
+       const params = req.params;
+       const name = "%" + params.query + "%";
+       console.log(name);
+       
+       
+       const result = await db.query("SELECT * FROM products WHERE name LIKE ($1)", [name]) 
        const products = result.rows;
 
        let productIDs = [];
@@ -218,7 +222,7 @@ app.post("/searchbar", async(req, res) => {
     }
 });
 
-app.get("/searchbar/:category", async(req, res) => {
+app.get("/searchbar/click/:category", async(req, res) => {
     try{
         const {category} = req.params;
         const result = await db.query("SELECT * FROM products WHERE category = ($1)", [category]);

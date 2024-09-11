@@ -9,7 +9,7 @@ const authorization = require("../middleware/authorization");
 router.post("/register", validInfo, async(req, res) => {
     try {
         // 1 destructure req.body
-            const {name, email, password} = req.body;
+            const {name, email, password, dateOfBirth} = req.body;
 
         // 2. check if user exists
             const user = await db.query("SELECT * FROM users WHERE user_email = ($1)", [email])
@@ -24,8 +24,8 @@ router.post("/register", validInfo, async(req, res) => {
 
             const bcryptPassword = await bcrypt.hash(password, salt);
         // 4. enter new user in to the database
-            const newUser = await db.query("INSERT INTO users (user_name, user_email, user_password) VALUES ($1, $2, $3) RETURNING *", 
-            [name, email, bcryptPassword]
+            const newUser = await db.query("INSERT INTO users (user_name, user_email, user_password, date_of_birth) VALUES ($1, $2, $3, $4) RETURNING *", 
+            [name, email, bcryptPassword, dateOfBirth]
             );
 
         // 5. generate token

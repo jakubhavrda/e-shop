@@ -81,3 +81,6 @@ SELECT *  FROM images
 INNER JOIN products
 ON images.productId = products.id
 WHERE products.id = 218 OR products.id = 219
+
+ALTER TABLE users
+ADD COLUMN date_of_birth VARCHAR(20) DEFAULT "01-01-2024"
